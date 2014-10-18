@@ -204,23 +204,28 @@ typedef void (^SRCompletionHandler)(id response, NSError *error);
             }
         };
         [eventSource start];
+        
+        if (operation.outputStream.streamStatus >= NSStreamStatusOpen) {
+            [((id<NSStreamDelegate>) operation.outputStream.delegate) stream:operation.outputStream handleEvent:NSStreamEventOpenCompleted];
+        }
     }];
     
     __weak __typeof(&*self)weakSelf = self;
     __weak __typeof(&*connection)weakConnection = connection;
     [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        __strong __typeof(&*weakSelf)strongSelf = weakSelf;
-        __strong __typeof(&*weakConnection)strongConnection = weakConnection;
-        if (strongSelf.completionHandler) {
-            strongSelf.completionHandler(nil, error);
-            strongSelf.completionHandler = nil;
-        } else if (!_stop && reconnecting) {
-            [strongConnection didReceiveError:error];
-            [strongSelf reconnect:strongConnection data:connectionData];
-        }
-    }];
+    }
+                                     failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                         __strong __typeof(&*weakSelf)strongSelf = weakSelf;
+                                         __strong __typeof(&*weakConnection)strongConnection = weakConnection;
+                                         if (strongSelf.completionHandler) {
+                                             strongSelf.completionHandler(nil, error);
+                                             strongSelf.completionHandler = nil;
+                                         } else if (!_stop && reconnecting) {
+                                             [strongConnection didReceiveError:error];
+                                             [strongSelf reconnect:strongConnection data:connectionData];
+                                         }
+                                     }];
     [self.serverSentEventsOperationQueue addOperation:operation];
 }
 
