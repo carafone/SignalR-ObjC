@@ -127,7 +127,7 @@
         URL = [URL stringByAppendingString:@"/"];
     }
     
-    if(useDefault) {
+    if(useDefault && ![URL hasSuffix:@"signalr/"]) {
         return [URL stringByAppendingString:@"signalr"];
     }
     
